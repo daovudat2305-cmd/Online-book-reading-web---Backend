@@ -17,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import bookonline.dto.request.AuthorRegisterRequest;
+import bookonline.dto.response.AuthorInfoResponse;
 import bookonline.dto.response.AuthorRegisterReponse;
 import bookonline.entity.AuthorRequest;
 import bookonline.entity.User;
@@ -94,7 +95,7 @@ public class AuthorService {
 		return response;
 	}
 	
-	public Page<AuthorRegisterReponse> getAllRequest(int page, int size) {
+	public Page<AuthorRegisterReponse> getAllRequests(int page, int size) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
 		Page<AuthorRequest> requestPage = authorRequestRepository.findAllByIsDelete(0,pageable);
@@ -139,4 +140,27 @@ public class AuthorService {
 		authorRequestRepository.save(authorRequest);
 		
 	}
+	
+	
+	public Page<AuthorInfoResponse> getAllAuthors(int page, int size) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+		Page<User> listAuthor = userRepository.findAllByRole("AUTHOR", pageable);
+		
+		return listAuthor.map(author -> {
+			UserInfo userInfo = userInfoRepository.findByUserId(author.getUserId());
+			AuthorInfoResponse responseRegister = AuthorInfoResponse.builder()
+					.authorId(author.getUserId())
+					.username(author.getUsername())
+					.email(author.getEmail())
+					.fullName(userInfo.getFullName())
+					.avatar(userInfo.getAvatar())
+					.gender(userInfo.getGender())
+					.dob(userInfo.getDob())
+					.bankAccount(userInfo.getBankAccount())
+					.build();
+			return responseRegister;
+		});
+		
+	} 
 }

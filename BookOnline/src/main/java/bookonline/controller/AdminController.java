@@ -23,7 +23,7 @@ public class AdminController {
 	public ResponseEntity<?> getAllRequests(
 			@RequestParam(defaultValue = "0") int page, 
 			@RequestParam(defaultValue = "12") int size) {
-		return ResponseEntity.ok().body(authorService.getAllRequest(page,size));
+		return ResponseEntity.ok().body(authorService.getAllRequests(page,size));
 	}
 	
 	//duyệt đơn đăng ký
@@ -32,5 +32,14 @@ public class AdminController {
 	public ResponseEntity<?> reviewAuthorRegister(@PathVariable String requestId, @RequestBody String status) {
 		authorService.reviewAuthorRegister(requestId, status);
 		return ResponseEntity.ok(null);
+	}
+	
+	//lấy danh sách tác giả
+	@GetMapping("/authors")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> getListAuthors(
+			@RequestParam(defaultValue = "0") int page, 
+			@RequestParam(defaultValue = "12") int size) {
+		return ResponseEntity.ok().body(authorService.getAllAuthors(page, size));
 	}
 }
