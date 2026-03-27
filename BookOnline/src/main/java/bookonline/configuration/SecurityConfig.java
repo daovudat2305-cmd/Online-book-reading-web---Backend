@@ -79,7 +79,7 @@ public class SecurityConfig {
 		//phân quyền
 		httpSecurity.authorizeHttpRequests(request -> 
 				request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
-//						.requestMatchers(HttpMethod.GET, "/users").hasRole(Role.ADMIN.name())
+						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 				.anyRequest().authenticated()
 		);
 		

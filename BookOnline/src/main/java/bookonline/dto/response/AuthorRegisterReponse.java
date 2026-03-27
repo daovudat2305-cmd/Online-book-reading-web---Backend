@@ -14,13 +14,17 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserProfileResponse {
-	String username;
+public class AuthorRegisterReponse {
+	String requestId;
 	String email;
 	String fullName;
-	String role;
-	LocalDate dob;
-	String gender;
 	String avatar;
+	String username;
+	String gender;
+	LocalDate dob;
 	String bankAccount;
+	String description;
+	LocalDate createdAt;
+	String status;
+	LocalDate reviewAt;
 }

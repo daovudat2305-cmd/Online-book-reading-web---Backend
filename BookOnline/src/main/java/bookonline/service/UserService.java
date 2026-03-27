@@ -55,6 +55,7 @@ public class UserService {
 				.build();
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUser(user);
+		userInfo.setAvatar("http://res.cloudinary.com/dnkm4kqa9/image/upload/v1774541408/vqha0vf7wy9sckb8rkxr.jpg");
 		user.setUserInfo(userInfo);
 		
 		userRepository.save(user);
@@ -83,6 +84,7 @@ public class UserService {
 				.role(user.getRole())
 				.gender(userInfo.getGender())
 				.avatar(userInfo.getAvatar())
+				.bankAccount(userInfo.getBankAccount())
 				.build();
 		
 		return response;
