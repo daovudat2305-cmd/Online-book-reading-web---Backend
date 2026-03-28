@@ -122,6 +122,33 @@ public class AuthorService {
 		
 	}
 	
+	public Page<AuthorRegisterReponse> searchAuthorRequestByName(int page, int size, String keyword) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+		Page<AuthorRequest> requestPage = authorRequestRepository.findAuthorRequestByName(keyword, pageable);
+		
+		//Page<AuthorRequest> sang Page<AuthorRegisterReponse>
+		return requestPage.map(authorRequest -> {
+			User user = userRepository.findByUserId(authorRequest.getAuthorId());
+			UserInfo userInfo = userInfoRepository.findByUserId(authorRequest.getAuthorId());
+			AuthorRegisterReponse responseRegister = AuthorRegisterReponse.builder()
+					.fullName(userInfo.getFullName())
+					.email(user.getEmail())
+					.username(user.getUsername())
+					.avatar(userInfo.getAvatar())
+					.gender(userInfo.getGender())
+					.dob(userInfo.getDob())
+					.bankAccount(userInfo.getBankAccount())
+					.requestId(authorRequest.getRequestId())
+					.createdAt(authorRequest.getCreatedAt())
+					.reviewAt(authorRequest.getReviewAt())
+					.description(authorRequest.getDescription())
+					.build();
+			return responseRegister;
+		});
+		
+	}
+	
 	public void reviewAuthorRegister(String requestId, String status) {
 		AuthorRequest authorRequest = authorRequestRepository.findByRequestId(requestId);
 		if(authorRequest == null) {
@@ -158,6 +185,28 @@ public class AuthorService {
 					.gender(userInfo.getGender())
 					.dob(userInfo.getDob())
 					.bankAccount(userInfo.getBankAccount())
+					.build();
+			return responseRegister;
+		});
+		
+	} 
+	
+	public Page<AuthorInfoResponse> searchAuthors(int page, int size, String keyword) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by("fullName").ascending());
+
+		Page<UserInfo> listAuthor = userInfoRepository.findAuthorsByKeyword(keyword.trim(), pageable);
+		
+		return listAuthor.map(author -> {
+			User authorAccount = userRepository.findByUserId(author.getUserId());
+			AuthorInfoResponse responseRegister = AuthorInfoResponse.builder()
+					.authorId(author.getUserId())
+					.username(authorAccount.getUsername())
+					.email(authorAccount.getEmail())
+					.fullName(author.getFullName())
+					.avatar(author.getAvatar())
+					.gender(author.getGender())
+					.dob(author.getDob())
+					.bankAccount(author.getBankAccount())
 					.build();
 			return responseRegister;
 		});

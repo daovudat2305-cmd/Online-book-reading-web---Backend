@@ -18,12 +18,23 @@ import bookonline.service.AuthorService;
 public class AdminController {
 	@Autowired private AuthorService authorService;
 	
+	//danh sách đơn đăng ký
 	@GetMapping("/author-request")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> getAllRequests(
 			@RequestParam(defaultValue = "0") int page, 
 			@RequestParam(defaultValue = "12") int size) {
 		return ResponseEntity.ok().body(authorService.getAllRequests(page,size));
+	}
+	
+	//tìm kiếm đơn đăng ký
+	@GetMapping("/author-request/{keyword}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> searchRequestsByAuthorName(
+			@RequestParam(defaultValue = "0") int page, 
+			@RequestParam(defaultValue = "12") int size,
+			@PathVariable String keyword) {
+		return ResponseEntity.ok().body(authorService.searchAuthorRequestByName(page, size, keyword));
 	}
 	
 	//duyệt đơn đăng ký
@@ -41,5 +52,15 @@ public class AdminController {
 			@RequestParam(defaultValue = "0") int page, 
 			@RequestParam(defaultValue = "12") int size) {
 		return ResponseEntity.ok().body(authorService.getAllAuthors(page, size));
+	}
+	
+	//tìm kiếm tác giả
+	@GetMapping("/authors/{keyword}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> searchAuthors(
+			@RequestParam(defaultValue = "0") int page, 
+			@RequestParam(defaultValue = "12") int size,
+			@PathVariable String keyword) {
+		return ResponseEntity.ok().body(authorService.searchAuthors(page, size, keyword));
 	}
 }
