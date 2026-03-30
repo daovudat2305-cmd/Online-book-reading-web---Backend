@@ -18,4 +18,5 @@ public class UserUpdateRequest {
 	String fullName;
 	String gender;
 	LocalDate dob;
+	String bankAccount;
 }
