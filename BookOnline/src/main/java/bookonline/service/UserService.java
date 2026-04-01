@@ -1,6 +1,9 @@
 package bookonline.service;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,21 +18,24 @@ import org.springframework.stereotype.Service;
 import bookonline.dto.request.UserCreationRequest;
 import bookonline.dto.request.UserUpdateRequest;
 import bookonline.dto.response.UserProfileResponse;
+import bookonline.dto.response.UserVipResponse;
 import bookonline.entity.User;
 import bookonline.entity.UserInfo;
+import bookonline.entity.UserVip;
 import bookonline.repository.UserInfoRepository;
 import bookonline.repository.UserRepository;
+import bookonline.repository.UserVipRepository;
 
 @Service
 public class UserService {
 	
 	private final PasswordEncoder passwordEncoder;
 	
-	@Autowired
-	private UserRepository userRepository;
+	@Autowired private UserRepository userRepository;
 	
-	@Autowired
-	private UserInfoRepository userInfoRepository;
+	@Autowired private UserInfoRepository userInfoRepository;
+	
+	@Autowired private UserVipRepository userVipRepository;
 	
 	UserService(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
@@ -76,6 +82,28 @@ public class UserService {
 		}
 		
 		UserInfo userInfo = userInfoRepository.findByUserId(user.getUserId());
+		UserVip userVip = userVipRepository.findByUserId(user.getUserId());
+
+		UserVipResponse userVipDetail = null;
+		boolean isVip = false;
+		if(userVip!=null) {
+			if (userVip.getEndDate().isBefore(LocalDateTime.now())) {
+		        // Nếu ngày kết thúc nằm TRƯỚC hiện tại -> Đã hết hạn
+		        userVipRepository.delete(userVip);
+		    }
+			else {
+				long daysRemaining = ChronoUnit.DAYS.between(LocalDate.now(), userVip.getEndDate().toLocalDate());
+				isVip = true;
+				userVipDetail = UserVipResponse.builder()
+						.vipName(userVip.getVipId())
+						.startDate(userVip.getStartDate())
+						.endDate(userVip.getEndDate())
+						.daysRemaining(daysRemaining)
+						.build();
+			}
+		}
+		
+		
 		UserProfileResponse response = UserProfileResponse.builder()
 				.username(username)
 				.fullName(userInfo.getFullName())
@@ -85,6 +113,8 @@ public class UserService {
 				.gender(userInfo.getGender())
 				.avatar(userInfo.getAvatar())
 				.bankAccount(userInfo.getBankAccount())
+				.isVip(isVip)
+				.vipDetail(userVipDetail)
 				.build();
 		
 		return response;

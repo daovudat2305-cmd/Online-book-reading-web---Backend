@@ -1,6 +1,7 @@
 package bookonline.dto.response;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -14,16 +15,14 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserProfileResponse {
+public class PaymentResponse {
+	String paymentId;
 	String username;
-	String email;
-	String fullName;
-	String role;
-	LocalDate dob;
-	String gender;
-	String avatar;
-	String bankAccount;
+	String vipId;
+	String content;
+	String status;
+	double amount;
+	LocalDateTime createdTime;
+	LocalDateTime paidTime;
 	
-	Boolean isVip;
-	UserVipResponse vipDetail;
 }
