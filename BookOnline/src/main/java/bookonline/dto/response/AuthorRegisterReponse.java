@@ -1,4 +1,4 @@
-package bookonline.dto.request;
+package bookonline.dto.response;
 
 import java.time.LocalDate;
 
@@ -14,9 +14,17 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserUpdateRequest {
+public class AuthorRegisterReponse {
+	String requestId;
+	String email;
 	String fullName;
+	String avatar;
+	String username;
 	String gender;
 	LocalDate dob;
 	String bankAccount;
+	String description;
+	LocalDate createdAt;
+	String status;
+	LocalDate reviewAt;
 }

@@ -22,4 +22,8 @@ public class UserProfileResponse {
 	LocalDate dob;
 	String gender;
 	String avatar;
+	String bankAccount;
+	
+	Boolean isVip;
+	UserVipResponse vipDetail;
 }

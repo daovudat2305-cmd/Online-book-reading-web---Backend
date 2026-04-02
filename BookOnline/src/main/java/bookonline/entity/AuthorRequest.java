@@ -1,15 +1,11 @@
 package bookonline.entity;
 
 import java.time.LocalDate;
-import java.util.List;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,24 +19,16 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-public class User {
+public class AuthorRequest {
 	
 	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	String userId;
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	String requestId;
 	
-	String email;
-	String username;
-	String password;
-	String role;
+	String authorId;
+	String status;
+	String description;
 	LocalDate createdAt;
-	
-	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-	private UserInfo userInfo;
-	
-	@OneToMany(mappedBy = "user")
-	private List<Payment> payments;
-
-	@OneToMany(mappedBy = "user")
-	private List<UserVip> userVips;
+	LocalDate reviewAt;
+	int isDelete;
 }

@@ -1,6 +1,6 @@
-package bookonline.dto.request;
+package bookonline.dto.response;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -14,9 +14,9 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserUpdateRequest {
-	String fullName;
-	String gender;
-	LocalDate dob;
-	String bankAccount;
+public class UserVipResponse {
+	String vipName;
+	LocalDateTime startDate;
+	LocalDateTime endDate;
+	long daysRemaining;
 }

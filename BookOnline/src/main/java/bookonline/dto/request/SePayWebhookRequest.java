@@ -1,10 +1,7 @@
 package bookonline.dto.request;
 
-import java.time.LocalDate;
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -12,11 +9,16 @@ import lombok.experimental.FieldDefaults;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserUpdateRequest {
-	String fullName;
-	String gender;
-	LocalDate dob;
-	String bankAccount;
+public class SePayWebhookRequest {
+	String gateway;
+	String transactionDate;
+	String accountNumber;
+	String subAccount;
+	String content;
+	String transferType;
+	Double transferAmount;
+	Double accumulated;
+	String referenceCode;
+	String description;
 }
