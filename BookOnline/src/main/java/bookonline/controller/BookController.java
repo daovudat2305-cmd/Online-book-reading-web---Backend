@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/books") // Đường dẫn dành cho người đọc (đã đăng nhập)
+@RequestMapping("/books") 
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class BookController {

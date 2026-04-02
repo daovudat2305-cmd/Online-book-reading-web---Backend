@@ -79,7 +79,9 @@ public class SecurityConfig {
 		//phân quyền
 		httpSecurity.authorizeHttpRequests(request -> 
 				request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+						.requestMatchers(HttpMethod.GET, "/books/*").permitAll()
 						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+						.requestMatchers("/payment/sepay-webhook").permitAll()
 				.anyRequest().authenticated()
 		);
 		

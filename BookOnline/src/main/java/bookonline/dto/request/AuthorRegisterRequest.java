@@ -29,6 +29,6 @@ public class AuthorRegisterRequest {
 	@NotEmpty(message = "Yêu cầu điền đủ lý do")
 	String description;
 	
-	@NotEmpty(message = "Yêu cầu điền đủ Họ và tên")
+	@NotEmpty(message = "Yêu cầu điền đủ Số tài khoản")
 	String bankAccount;
 }

@@ -18,8 +18,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RestController
-@RequestMapping("/author/books") 
-@CrossOrigin(origins = "*")      
+@RequestMapping("/author/books")     
 @RequiredArgsConstructor        
 public class AuthorBookController {
 
