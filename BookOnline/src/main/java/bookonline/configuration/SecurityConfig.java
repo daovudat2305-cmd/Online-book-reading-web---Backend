@@ -80,6 +80,8 @@ public class SecurityConfig {
 		httpSecurity.authorizeHttpRequests(request -> 
 				request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
 						.requestMatchers(HttpMethod.GET, "/books/*").permitAll()
+						.requestMatchers(HttpMethod.GET, "/comments/*").permitAll()
+						.requestMatchers(HttpMethod.GET, "/favorites/*/count").permitAll()
 						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 						.requestMatchers("/payment/sepay-webhook").permitAll()
 				.anyRequest().authenticated()
