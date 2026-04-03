@@ -13,6 +13,7 @@ import bookonline.entity.Book;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, String> {
+	Book findByBookId(String bookId);
 
     // 1. Tìm tất cả sách theo trạng thái (0: Chờ duyệt, 1: Đã duyệt, 2: Từ chối, 3: Đã xóa)
     List<Book> findByStatus(Integer status);
