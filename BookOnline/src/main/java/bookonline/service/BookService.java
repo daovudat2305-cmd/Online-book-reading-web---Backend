@@ -5,6 +5,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -120,5 +123,11 @@ public class BookService {
     public Book getBookById(String bookId) {
         return bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy cuốn sách có ID: " + bookId));
+    }
+    // 9. phân trang
+    public Page<Book> getApprovedBooksPaged(int page, int size) {
+        // Tạo Pageable: trang số 'page', mỗi trang 'size' mục, sắp xếp ngày tạo giảm dần
+        Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
+        return bookRepository.findByStatus(1, pageable); // status = 1 là sách đã duyệt
     }
 }
