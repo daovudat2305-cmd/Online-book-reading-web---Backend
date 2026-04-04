@@ -8,7 +8,7 @@ import bookonline.entity.Favorite;
 
 
 @Repository
-public interface FavoriteRepository extends JpaRepository<Favorite, String>{
+public interface FavoriteRepository extends JpaRepository<Favorite, Integer>{
 	Favorite findByFavoriteId(String favoriteId);
 	Favorite findByUserIdAndBookId(String userId, String bookId);
 	long countByBookId(String bookId);

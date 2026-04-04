@@ -1,7 +1,9 @@
 package bookonline.service;
 
+
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -124,10 +126,41 @@ public class BookService {
         return bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy cuốn sách có ID: " + bookId));
     }
-    // 9. phân trang
-    public Page<Book> getApprovedBooksPaged(int page, int size) {
-        // Tạo Pageable: trang số 'page', mỗi trang 'size' mục, sắp xếp ngày tạo giảm dần
-        Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
-        return bookRepository.findByStatus(1, pageable); // status = 1 là sách đã duyệt
+
+    // 9. TÍNH NĂNG MỚI: Lọc sách theo nhiều điều kiện kết hợp phân trang
+
+    public Page<Book> filterBooks(String keyword, String categories, String type, Integer status, int page, int size, String sort) {
+        // 1. Xử lý sắp xếp (JS gửi lên 'newest' hoặc 'oldest')
+    	org.springframework.data.domain.Sort sortOrder = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")
+    	        .and(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "bookId")); 
+
+    	if ("oldest".equalsIgnoreCase(sort)) {
+    	    sortOrder = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "createdAt")
+    	            .and(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "bookId"));
+    	}
+
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        // 2. Xử lý danh sách thể loại từ String "1,2" thành List<Integer> [1, 2]
+        List<Integer> categoryIdList = null;
+        if (categories != null && !categories.trim().isEmpty()) {
+            categoryIdList = new ArrayList<>();
+            String[] catArray = categories.split(",");
+            for (String cat : catArray) {
+                try {
+                    categoryIdList.add(Integer.parseInt(cat.trim()));
+                } catch (NumberFormatException e) {
+                    // Bỏ qua nếu ID không phải là số hợp lệ
+                }
+            }
+            if (categoryIdList.isEmpty()) categoryIdList = null; 
+        }
+
+        // 3. Xử lý từ khóa và loại truyện (ALL thì gán bằng null để lấy hết)
+        if (keyword != null && keyword.trim().isEmpty()) keyword = null;
+        if (type != null && (type.trim().isEmpty() || type.equalsIgnoreCase("ALL"))) type = null;
+
+        // 4. Gọi xuống Repository vừa viết
+        return bookRepository.filterBooks(keyword, categoryIdList, type, status, pageable);
     }
 }
