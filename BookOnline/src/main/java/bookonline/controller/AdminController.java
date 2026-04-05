@@ -12,11 +12,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import bookonline.service.AuthorService;
+import bookonline.service.BookService;
 
 @RestController
 @RequestMapping("/admin")
 public class AdminController {
 	@Autowired private AuthorService authorService;
+	@Autowired private BookService bookService;
 	
 	//danh sách đơn đăng ký
 	@GetMapping("/author-request")
@@ -62,5 +64,12 @@ public class AdminController {
 			@RequestParam(defaultValue = "12") int size,
 			@PathVariable String keyword) {
 		return ResponseEntity.ok().body(authorService.searchAuthors(page, size, keyword));
+	}
+	
+	//xem sách theo tác giả
+	@GetMapping("/authors/{authorName}/books")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> getBookByAuthor(@PathVariable String authorName) {
+		return ResponseEntity.ok().body(bookService.getBookByAuthorName(authorName));
 	}
 }

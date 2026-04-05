@@ -74,4 +74,7 @@ public interface BookRepository extends JpaRepository<Book, String> {
             WHERE bc.bookId = :bookId
             """, nativeQuery = true)
     List<String> findCategoryNamesByBookId(@Param("bookId") String bookId);
+    
+    //tìm theo tác giả và trạng thái đã duyệt
+    List<Book> findByAuthorNameAndStatus(String authorName, Integer status);
 }

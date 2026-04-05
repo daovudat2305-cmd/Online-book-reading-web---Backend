@@ -170,7 +170,7 @@ public class BookService {
         return bookRepository.filterBooks(keyword, categoryIdList, type, status, pageable);
     }
     
-    //xếp hạng 15 quyển sách rating cao nhất
+    //xếp hạng 10 quyển sách rating cao nhất
     public List<BookRankResponse> findTop15Books() {
     	List<Book> listBooks = bookRepository.findTop15BooksSortedByRating();
     	
@@ -196,5 +196,10 @@ public class BookService {
     	}
     	
     	return response;
+    }
+    
+    //lấy sách đăng bởi tác giả (đã được duyệt) để admin xem trong thống kê
+    public List<Book> getBookByAuthorName(String authorName) {
+    	return bookRepository.findByAuthorNameAndStatus(authorName, 1);
     }
 }
