@@ -42,4 +42,36 @@ public interface BookRepository extends JpaRepository<Book, String> {
                             @Param("type") String type, 
                             @Param("status") Integer status, 
                             Pageable pageable);
+    
+    
+    //xếp hạng sách
+    @Query(value = """
+            WITH sub1 AS (
+                SELECT b.bookId, COUNT(c.commentId) AS countComment
+                FROM book b 
+                LEFT JOIN comment c ON b.bookId = c.bookId
+                WHERE b.status = 1
+                GROUP BY b.bookId 
+            ), 
+            sub2 AS (
+                SELECT sub1.bookId, sub1.countComment, COUNT(f.favoriteId) AS countFavo
+                FROM sub1
+                LEFT JOIN favorite f ON sub1.bookId = f.bookId 
+                GROUP BY sub1.bookId, sub1.countComment 
+            )
+            SELECT b.* FROM book b 
+            INNER JOIN sub2 ON b.bookId = sub2.bookId
+            ORDER BY (COALESCE(b.viewCount, 0) + sub2.countComment + sub2.countFavo) DESC
+            LIMIT 10
+            """, nativeQuery = true)
+    List<Book> findTop15BooksSortedByRating();
+    
+    //danh sách thể loại theo bookId
+    @Query(value = """
+            SELECT c.categoryName 
+            FROM category c 
+            JOIN book_category bc ON c.categoryId = bc.categoryId 
+            WHERE bc.bookId = :bookId
+            """, nativeQuery = true)
+    List<String> findCategoryNamesByBookId(@Param("bookId") String bookId);
 }

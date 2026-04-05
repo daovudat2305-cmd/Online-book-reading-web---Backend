@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,8 +15,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import bookonline.dto.response.BookRankResponse;
 import bookonline.entity.Book;
 import bookonline.repository.BookRepository;
+import bookonline.repository.CommentRepository;
+import bookonline.repository.FavoriteRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -24,6 +28,8 @@ public class BookService {
 
     private final BookRepository bookRepository;
     private final CloudinaryService cloudinaryService;
+    @Autowired private CommentRepository commentRepository;
+    @Autowired private FavoriteRepository favoriteRepository;
 
     // 1. Lấy danh sách sách đang CHỜ DUYỆT (status = 0)
     public List<Book> getPendingBooks() {
@@ -162,5 +168,33 @@ public class BookService {
 
         // 4. Gọi xuống Repository vừa viết
         return bookRepository.filterBooks(keyword, categoryIdList, type, status, pageable);
+    }
+    
+    //xếp hạng 15 quyển sách rating cao nhất
+    public List<BookRankResponse> findTop15Books() {
+    	List<Book> listBooks = bookRepository.findTop15BooksSortedByRating();
+    	
+    	List<BookRankResponse> response = new ArrayList<>(); 
+    	
+    	for(Book book : listBooks) {
+    		long commentCount = commentRepository.countByBookId(book.getBookId());
+    		long favoCount = favoriteRepository.countByBookId(book.getBookId());
+    		List<String> categories = bookRepository.findCategoryNamesByBookId(book.getBookId());
+    		BookRankResponse item = BookRankResponse.builder()
+    				.bookId(book.getBookId())
+    				.title(book.getTitle())
+    				.authorName(book.getAuthorName())
+    				.type(book.getType())
+    				.coverImage(book.getCoverImage())
+    				.viewCount(book.getViewCount())
+    				.commentCount(commentCount)
+    				.favoCount(favoCount)
+    				.categories(categories)
+    				.build();
+    		response.add(item);
+    				
+    	}
+    	
+    	return response;
     }
 }

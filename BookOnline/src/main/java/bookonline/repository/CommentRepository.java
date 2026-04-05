@@ -11,4 +11,5 @@ import bookonline.entity.Comment;
 public interface CommentRepository extends JpaRepository<Comment, String>{
 	Comment findByCommentId(String commentId);
 	Page<Comment> findByBookId(String bookId, Pageable pageable);
+	long countByBookId(String bookId);
 }

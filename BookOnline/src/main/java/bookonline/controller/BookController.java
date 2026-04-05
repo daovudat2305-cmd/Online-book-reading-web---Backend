@@ -42,4 +42,10 @@ public class BookController {
         // Trả về cho Frontend
         return ResponseEntity.ok(result);
     }
+    
+    //xếp hạng sách
+    @GetMapping("/rank")
+    public ResponseEntity<?> bookRanking() {
+    	return ResponseEntity.ok().body(bookService.findTop15Books());
+    }
 }
