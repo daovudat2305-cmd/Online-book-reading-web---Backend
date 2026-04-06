@@ -1,8 +1,8 @@
-package bookonline.dto.response;
+package bookonline.entity;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,15 +15,16 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PaymentResponse {
-	String paymentId;
-	String username;
-	String userRole;
-	String vipId;
-	String content;
-	String status;
-	double amount;
-	LocalDateTime createdTime;
-	LocalDateTime paidTime;
+@Entity
+public class BookEarning {
+	@Id
+	long id;
 	
+	String bookId;
+	String authorId;
+	
+	long amount;
+	String status;
+	
+	String paymentRequestId;
 }

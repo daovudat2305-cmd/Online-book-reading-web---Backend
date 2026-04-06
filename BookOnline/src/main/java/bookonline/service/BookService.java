@@ -17,6 +17,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import bookonline.dto.response.BookRankResponse;
 import bookonline.entity.Book;
+import bookonline.entity.BookEarning;
+import bookonline.repository.BookEarningRepository;
 import bookonline.repository.BookRepository;
 import bookonline.repository.CommentRepository;
 import bookonline.repository.FavoriteRepository;
@@ -30,6 +32,7 @@ public class BookService {
     private final CloudinaryService cloudinaryService;
     @Autowired private CommentRepository commentRepository;
     @Autowired private FavoriteRepository favoriteRepository;
+    @Autowired private BookEarningRepository bookEarningRepository;
 
     // 1. Lấy danh sách sách đang CHỜ DUYỆT (status = 0)
     public List<Book> getPendingBooks() {
@@ -48,6 +51,18 @@ public class BookService {
         
         book.setStatus(1);
         book.setMessage(null); // Xóa lời nhắn cũ nếu có khi duyệt lại
+        
+        //lưu vào bookearning để tính tiền
+        if(book.getType().equalsIgnoreCase("VIP")) {
+        	BookEarning bookEarning = BookEarning.builder()
+        			.authorId(book.getAuthorId())
+        			.bookId(bookId)
+        			.amount(10000)
+        			.status("UNPAID")
+        			.build();
+        	bookEarningRepository.save(bookEarning);
+        }
+        
         return bookRepository.save(book);
     }
 

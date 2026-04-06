@@ -37,14 +37,6 @@ public class PaymentController {
 		return ResponseEntity.ok().body(paymentService.getPaymentStatus(paymentId));
 	}
 	
-	@GetMapping("/history")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> getAllPayments(
-			@RequestParam(defaultValue = "0") int page, 
-			@RequestParam(defaultValue = "10") int size) {
-		return ResponseEntity.ok().body(paymentService.getAllPayments(page, size));
-	}
-	
 	@GetMapping("/history/{username}")
 	@PreAuthorize("hasAnyRole('AUTHOR', 'USER')")
 	public ResponseEntity<?> getPaymentsByUsername(

@@ -1,9 +1,7 @@
 package bookonline.service;
 
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -113,6 +111,13 @@ public class PaymentService {
 					
 					return Map.of("success", true);
 				}
+				else {
+					payment.setStatus("FAIL");
+					payment.setPaidTime(LocalDateTime.now());
+					
+					paymentRepository.save(payment);
+					return Map.of("sucsess", false);
+				}
 			}
 		}
 		return Map.of("success", false);
@@ -121,27 +126,6 @@ public class PaymentService {
 	public Map<String,String> getPaymentStatus(String paymentId) {
 		Payment payment = paymentRepository.findByPaymentId(paymentId);
 		return Map.of("status", payment.getStatus());
-	}
-	
-	public Page<PaymentResponse> getAllPayments(int page, int size) {
-		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("paidTime").nullsFirst()));
-		
-		Page<Payment> listPayments = paymentRepository.findAll(pageable);
-		
-		return listPayments.map(payment -> {
-			PaymentResponse response = PaymentResponse.builder()
-					.paymentId(payment.getPaymentId())
-					.username(payment.getUser().getUsername())
-					.vipId(payment.getVipId())
-					.amount(payment.getAmount())
-					.status(payment.getStatus())
-					.createdTime(payment.getCreatedTime())
-					.paidTime(payment.getPaidTime())
-					.content(payment.getContent())
-					.build();
-			return response;
-		});
-		
 	}
 	
 	public Page<PaymentResponse> getPaymentsByUsername(int page, int size, String username) {
@@ -167,5 +151,59 @@ public class PaymentService {
 					.build();
 			return response;
 		});
+	}
+	
+	//admin lấy danh sách giao dịch
+	public Page<PaymentResponse> getAllPayments(int page, int size) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("paidTime").nullsFirst()));
+		
+		Page<Payment> listPayments = paymentRepository.findAll(pageable);
+		
+		return listPayments.map(payment -> {
+			PaymentResponse response = PaymentResponse.builder()
+					.paymentId(payment.getPaymentId())
+					.username(payment.getUser().getUsername())
+					.userRole(payment.getUser().getRole())
+					.vipId(payment.getVipId())
+					.amount(payment.getAmount())
+					.status(payment.getStatus())
+					.createdTime(payment.getCreatedTime())
+					.paidTime(payment.getPaidTime())
+					.content(payment.getContent())
+					.build();
+			return response;
+		});
+	}
+	
+	//tìm kiếm giao dịch
+	public Page<PaymentResponse> searchPayment(String keyword,int page, int size) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("paidTime")));
+		
+		Page<Payment> listPayments = paymentRepository.searchPaymentByKeyword(keyword, pageable);
+		
+		return listPayments.map(payment -> {
+			PaymentResponse response = PaymentResponse.builder()
+					.paymentId(payment.getPaymentId())
+					.username(payment.getUser().getUsername())
+					.userRole(payment.getUser().getRole())
+					.vipId(payment.getVipId())
+					.amount(payment.getAmount())
+					.status(payment.getStatus())
+					.createdTime(payment.getCreatedTime())
+					.paidTime(payment.getPaidTime())
+					.content(payment.getContent())
+					.build();
+			return response;
+		});
+	}
+	
+	//tổng doanh thu tháng
+	public Map<String, Long> getTotalRevenueCurrentMonth() {
+		return Map.of("totalRevenue", paymentRepository.sumAmountByCurrentMonth());
+	}
+	
+	//tổng người đăng ký vip trong tháng
+	public Map<String, Long> getNumberOfVipCurrentMonth() {
+		return Map.of("numberOfVip", paymentRepository.countVipCurrentMonth());
 	}
 }

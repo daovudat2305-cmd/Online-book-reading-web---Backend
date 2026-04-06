@@ -24,11 +24,11 @@ public interface AuthorRequestRepository extends JpaRepository<AuthorRequest, St
         value = "SELECT a.requestId, a.authorId, a.description, a.createdAt as createdAt, a.reviewAt, a.status, a.isDelete " +
                 "FROM authorrequest a " +
                 "JOIN userinfo u ON u.userId = a.authorId " +
-                "WHERE u.fullName LIKE CONCAT('%', :keyword, '%') AND a.isDelete=0 ",
+                "WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) AND a.isDelete=0 ",
         countQuery = "SELECT COUNT(authorrequest.userId) " +
                      "FROM authorrequest " +
                      "JOIN userinfo u ON u.userId = a.authorId " +
-                     "WHERE u.fullName LIKE CONCAT('%', :keyword, '%') AND a.isDelete=0",    
+                     "WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) AND a.isDelete=0",    
         nativeQuery = true
     )
 	Page<AuthorRequest> findAuthorRequestByName(@Param("keyword") String keyword, Pageable pageable);
