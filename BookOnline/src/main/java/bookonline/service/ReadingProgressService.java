@@ -1,6 +1,7 @@
 package bookonline.service;
 
 import java.time.LocalDateTime;
+import java.util.UUID; // Nhớ import thư viện UUID này nhé
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,7 +26,6 @@ public class ReadingProgressService {
     private final BookRepository bookRepository;
 
     // 1. HÀM LƯU LỊCH SỬ (Gọi ngay khi bấm nút "Đọc ngay")
-    // Hàm này bây giờ CHỈ LO lưu tiến trình, KHÔNG cộng view nữa.
     @Transactional
     public void saveOrUpdateProgress(String username, String bookId, Integer currentPage) {
         User user = userRepository.findByUsername(username);
@@ -42,27 +42,18 @@ public class ReadingProgressService {
                 .orElse(null);
 
         if (progress == null) {
-            // NẾU CHƯA CÓ LỊCH SỬ: Tạo mới và mặc định là trang 1 (hoặc trang được gửi lên)
-            progress = ReadingProgress.builder()
-                    .user(user)
-                    .book(book)
-                    .currentPage(currentPage != null ? currentPage : 1)
-                    .lastTimeRead(LocalDateTime.now())
-                    .totalReadingTimeSeconds(0L) // 🟢 THÊM MỚI: Khởi tạo thời gian đọc bằng 0 giây
-                    .build();
-        } else {
-            // NẾU ĐÃ CÓ LỊCH SỬ:
-            // 1. Luôn cập nhật thời gian mới nhất
-            progress.setLastTimeRead(LocalDateTime.now());
+            String newId = java.util.UUID.randomUUID().toString();
+            int pageToSave = (currentPage != null) ? currentPage : 1;
             
-            // 2. CHỈ CẬP NHẬT SỐ TRANG NẾU CÓ TRUYỀN XUỐNG (KHÔNG PHẢI NULL)
+            progressRepository.insertNewProgress(newId, realUserId, bookId, pageToSave, java.time.LocalDateTime.now());
+            
+        } else {
             if (currentPage != null) {
-                progress.setCurrentPage(currentPage);
+                progressRepository.updateTimeAndPage(progress.getProgressId(), java.time.LocalDateTime.now(), currentPage);
+            } else {
+                progressRepository.updateTimeOnly(progress.getProgressId(), java.time.LocalDateTime.now());
             }
-            // Nếu currentPage là null, nó sẽ giữ nguyên giá trị cũ trong DB (ví dụ trang 50)
         }
-
-        progressRepository.save(progress);
     }
 
     // 2. HÀM TĂNG LƯỢT ĐỌC RIÊNG BIỆT (Gọi sau khi user ở lại 10 giây)
@@ -91,24 +82,16 @@ public class ReadingProgressService {
     }
 
     // 4. HÀM CỘNG DỒN THỜI GIAN ĐỌC (TÍNH BẰNG GIÂY)
-
     @Transactional
     public void addReadingTime(String username, String bookId, Long secondsToAdd) {
         User user = userRepository.findByUsername(username);
-        if (user == null) return;
-
-        ReadingProgress progress = progressRepository
-                .findByUser_UserIdAndBook_BookId(user.getUserId(), bookId)
-                .orElse(null);
-
-        // Chỉ cộng thời gian nếu lịch sử đã tồn tại và số giây truyền lên > 0
-        if (progress != null && secondsToAdd != null && secondsToAdd > 0) {
-            Long currentSeconds = progress.getTotalReadingTimeSeconds();
-            if (currentSeconds == null) currentSeconds = 0L;
-            
-            // Cộng dồn thời gian cũ và mới
-            progress.setTotalReadingTimeSeconds(currentSeconds + secondsToAdd);
-            progressRepository.save(progress);
+        
+        // Nếu không có user hoặc số giây gửi lên bị lỗi thì bỏ qua
+        if (user == null || secondsToAdd == null || secondsToAdd <= 0) {
+            return; 
         }
+
+        //  Gọi thẳng xuống Repository để Database tự thực hiện phép cộng
+        progressRepository.incrementReadingTime(user.getUserId(), bookId, secondsToAdd);
     }
 }
