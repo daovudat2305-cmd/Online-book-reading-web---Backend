@@ -4,7 +4,9 @@ package bookonline.service;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +20,12 @@ import org.springframework.web.multipart.MultipartFile;
 import bookonline.dto.response.BookRankResponse;
 import bookonline.entity.Book;
 import bookonline.entity.BookEarning;
+import bookonline.entity.User;
 import bookonline.repository.BookEarningRepository;
 import bookonline.repository.BookRepository;
 import bookonline.repository.CommentRepository;
 import bookonline.repository.FavoriteRepository;
+import bookonline.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -33,6 +37,7 @@ public class BookService {
     @Autowired private CommentRepository commentRepository;
     @Autowired private FavoriteRepository favoriteRepository;
     @Autowired private BookEarningRepository bookEarningRepository;
+    @Autowired private UserRepository userRepository;
 
     // 1. Lấy danh sách sách đang CHỜ DUYỆT (status = 0)
     public List<Book> getPendingBooks() {
@@ -187,7 +192,7 @@ public class BookService {
     
     //xếp hạng 10 quyển sách rating cao nhất
     public List<BookRankResponse> findTop15Books() {
-    	List<Book> listBooks = bookRepository.findTop15BooksSortedByRating();
+    	List<Book> listBooks = bookRepository.findTop10BooksSortedByRating();
     	
     	List<BookRankResponse> response = new ArrayList<>(); 
     	
@@ -216,5 +221,53 @@ public class BookService {
     //lấy sách đăng bởi tác giả (đã được duyệt) để admin xem trong thống kê
     public List<Book> getBookByAuthorName(String authorName) {
     	return bookRepository.findByAuthorNameAndStatus(authorName, 1);
+    }
+    
+ // đề xuất sách
+    public List<Book> getRecomendBooks(String username) {
+    	if(username == null || username.equals("")) {
+    		return bookRepository.findTop10BooksSortedByRating();
+    	}
+    	User user = userRepository.findByUsername(username);
+    	if(user == null) {
+    		return bookRepository.findTop10BooksSortedByRating();
+    	}
+    	
+    	String userId = user.getUserId();
+    	
+    	List<String> readDeeplyIds = bookRepository.findBookIdsReadDeeplyIn7Day(userId);
+    	List<String> readShallowlyIds = bookRepository.findBookIdsReadShallowlyIn7Day(userId);
+    	List<String> favIds = bookRepository.findBookIdsFavoritedIn7Day(userId);
+    	List<String> cmtIds = bookRepository.findBookIdsCommentedIn7Day(userId);
+    	
+    	//chua doc hay yeu thich binh luan sach nao thi tra ve top 10
+    	if(readDeeplyIds.isEmpty() && readShallowlyIds.isEmpty() && favIds.isEmpty() && cmtIds.isEmpty()) {
+    		return bookRepository.findTop10BooksSortedByRating();
+    	}
+    	
+    	Map<Integer, Integer> categoryScores = new HashMap<>();
+    	processScore(readDeeplyIds, 7, categoryScores); //doc sau dc 7d
+    	processScore(readShallowlyIds, 2, categoryScores); // doc luot 2d
+    	processScore(favIds, 10, categoryScores);//yeu thich 10d
+    	processScore(cmtIds, 7, categoryScores); // cmt 7d
+    	
+    	//lay top 3 the loai cao diem nhat
+    	List<Integer> topCategories = categoryScores.entrySet().stream()
+                .sorted(Map.Entry.<Integer, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .limit(3)
+                .toList();
+    	System.out.println(topCategories);
+    	return bookRepository.findRecommendBooks(userId, topCategories);
+    }
+   
+    //chấm điểm danh sách thể loại
+    private void processScore(List<String> bookIds, int score, Map<Integer, Integer> scores) {
+    	for(String bookId : bookIds) {
+    		List<Integer> categoryIds = bookRepository.findCategoryIdByBookId(bookId);
+    		for(int categoryId : categoryIds) {
+    			scores.put(categoryId, scores.getOrDefault(categoryId, 0) + score);
+    		}
+    	}
     }
 }

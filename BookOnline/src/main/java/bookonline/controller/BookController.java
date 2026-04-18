@@ -48,4 +48,11 @@ public class BookController {
     public ResponseEntity<?> bookRanking() {
     	return ResponseEntity.ok().body(bookService.findTop15Books());
     }
+    
+    //lay sach de xuat
+    @GetMapping("/recommend")
+    public ResponseEntity<?> getRecommendBooks(@RequestParam(defaultValue = "") String username) {
+    	return ResponseEntity.ok().body(bookService.getRecomendBooks(username));
+    }
+
 }

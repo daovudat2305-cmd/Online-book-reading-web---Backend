@@ -64,7 +64,7 @@ public interface BookRepository extends JpaRepository<Book, String> {
             ORDER BY (COALESCE(b.viewCount, 0) + sub2.countComment + sub2.countFavo) DESC
             LIMIT 10
             """, nativeQuery = true)
-    List<Book> findTop15BooksSortedByRating();
+    List<Book> findTop10BooksSortedByRating();
     
     //danh sách thể loại theo bookId
     @Query(value = """
@@ -77,4 +77,72 @@ public interface BookRepository extends JpaRepository<Book, String> {
     
     //tìm theo tác giả và trạng thái đã duyệt
     List<Book> findByAuthorNameAndStatus(String authorName, Integer status);
+    
+    // đề xuất sách
+    //tìm categoryId theo bookId
+    @Query(value = """
+            SELECT c.categoryId
+            FROM category c
+            JOIN book_category bc ON c.categoryId = bc.categoryId
+            WHERE bc.bookId = :bookId
+            """, nativeQuery = true)
+    List<Integer> findCategoryIdByBookId(@Param("bookId") String bookId);
+   
+    //tìm bookId theo top 3 thể loại được quan tâm để đề xuất
+    @Query(value = """
+            WITH isRead AS (
+ 				SELECT bookId FROM reading_progress
+ 				WHERE userId = :userId
+ 			),
+ 			topByCategories AS (
+ 				SELECT bookId FROM book_category bc
+ 				WHERE bc.categoryId IN (:categoryIds)
+ 			)
+ 			
+ 			SELECT DISTINCT b.*
+ 			FROM book b
+ 			WHERE b.status = 1
+ 			AND b.bookId NOT IN (SELECT bookId FROM isRead)
+ 			AND b.bookId IN (SELECT bookId FROM topByCategories)
+ 			ORDER BY b.viewCount DESC
+ 			LIMIT 10
+            """, nativeQuery = true)
+    List<Book> findRecommendBooks(@Param("userId") String userId, @Param("categoryIds") List<Integer> categoryIds);
+   
+   
+   
+    //sách đọc hơn 1p trong 7 ngày gần đây
+    @Query(value = """
+            SELECT bookId FROM reading_progress
+ 			WHERE userId = :userId
+ 			AND lastTimeRead > NOW() - INTERVAL 7 DAY
+ 			AND total_reading_time_seconds >= 60
+            """, nativeQuery = true)
+    List<String> findBookIdsReadDeeplyIn7Day(@Param("userId") String userId);
+   
+    //sách đọc < 1p
+    @Query(value = """
+            SELECT bookId FROM reading_progress
+ 			WHERE userId = :userId
+ 			AND lastTimeRead > NOW() - INTERVAL 7 DAY
+ 			AND total_reading_time_seconds < 60
+            """, nativeQuery = true)
+    List<String> findBookIdsReadShallowlyIn7Day(@Param("userId") String userId);
+   
+    //sách yêu thích trong 7 ngày
+    @Query(value = """
+            SELECT bookId FROM favorite
+ 			WHERE userId = :userId
+ 			AND createdTime > NOW() - INTERVAL 7 DAY
+            """, nativeQuery = true)
+    List<String> findBookIdsFavoritedIn7Day(@Param("userId") String userId);
+   
+    //sách bình luận trong 7 ngày
+    @Query(value = """
+            SELECT bookId
+ 			FROM comment
+ 			WHERE userId = :userId
+ 			AND createdAt > NOW() - INTERVAL 7 DAY
+            """, nativeQuery = true)
+    List<String> findBookIdsCommentedIn7Day(@Param("userId") String userId);
 }
