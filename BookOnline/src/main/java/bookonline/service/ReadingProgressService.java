@@ -3,6 +3,8 @@ package bookonline.service;
 import java.time.LocalDateTime;
 import java.util.UUID; // Nhớ import thư viện UUID này nhé
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +26,7 @@ public class ReadingProgressService {
     private final ReadingProgressRepository progressRepository;
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
+    private final CacheWarmingService cacheWarmingService;
 
     // 1. HÀM LƯU LỊCH SỬ (Gọi ngay khi bấm nút "Đọc ngay")
     @Transactional
@@ -46,7 +49,7 @@ public class ReadingProgressService {
             int pageToSave = (currentPage != null) ? currentPage : 1;
             
             progressRepository.insertNewProgress(newId, realUserId, bookId, pageToSave, java.time.LocalDateTime.now());
-            
+            cacheWarmingService.refreshRecommendationAsync(username);
         } else {
             if (currentPage != null) {
                 progressRepository.updateTimeAndPage(progress.getProgressId(), java.time.LocalDateTime.now(), currentPage);

@@ -18,6 +18,7 @@ public class FavoriteService {
 	@Autowired private UserRepository userRepository;
 	@Autowired private FavoriteRepository favoriteRepository;
 	@Autowired private BookRepository bookRepository;
+	@Autowired private CacheWarmingService cacheWarmingService;
 	
 	//tính lượt yêu thích
 	public Map<String,Long> countFavoritesByBookId(String bookId) {
@@ -56,6 +57,7 @@ public class FavoriteService {
 			favoriteRepository.delete(favorite);
 			status = "delete";
 		}
+		cacheWarmingService.refreshRecommendationAsync(username);
 		return Map.of("status", status);
 	}
 

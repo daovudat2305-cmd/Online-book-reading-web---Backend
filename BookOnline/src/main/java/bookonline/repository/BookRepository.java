@@ -87,28 +87,18 @@ public interface BookRepository extends JpaRepository<Book, String> {
             WHERE bc.bookId = :bookId
             """, nativeQuery = true)
     List<Integer> findCategoryIdByBookId(@Param("bookId") String bookId);
-   
-    //tìm bookId theo top 3 thể loại được quan tâm để đề xuất
+    
+    // lấy sách ứng viên
     @Query(value = """
-            WITH isRead AS (
- 				SELECT bookId FROM reading_progress
- 				WHERE userId = :userId
- 			),
- 			topByCategories AS (
- 				SELECT bookId FROM book_category bc
- 				WHERE bc.categoryId IN (:categoryIds)
- 			)
- 			
- 			SELECT DISTINCT b.*
- 			FROM book b
- 			WHERE b.status = 1
- 			AND b.bookId NOT IN (SELECT bookId FROM isRead)
- 			AND b.bookId IN (SELECT bookId FROM topByCategories)
- 			ORDER BY b.viewCount DESC
- 			LIMIT 10
+            SELECT b.* FROM book b 
+            WHERE b.status = 1 
+            AND b.bookId NOT IN (
+                SELECT bookId FROM reading_progress WHERE userId = :userId
+            )
+            ORDER BY b.viewCount DESC
+            LIMIT 30
             """, nativeQuery = true)
-    List<Book> findRecommendBooks(@Param("userId") String userId, @Param("categoryIds") List<Integer> categoryIds);
-   
+    List<Book> findCandidateBooks(@Param("userId") String userId);
    
    
     //sách đọc hơn 1p trong 7 ngày gần đây

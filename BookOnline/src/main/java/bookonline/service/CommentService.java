@@ -27,6 +27,7 @@ public class CommentService {
 	@Autowired private UserRepository userRepository;
 	@Autowired private UserInfoRepository userInfoRepository;
 	@Autowired private BookRepository bookRepository;
+	@Autowired private CacheWarmingService cacheWarmingService;
 	
 	public Page<CommentResponse> getCommentsByBookId(String bookId, int page, int size) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -66,6 +67,7 @@ public class CommentService {
 				.build();
 		
 		commentRepository.save(comment);
+		cacheWarmingService.refreshRecommendationAsync(username);
 		return Map.of("success", "Bình luận thành công");
 	}
 	
@@ -78,6 +80,7 @@ public class CommentService {
 		}
 		
 		commentRepository.delete(comment);
+		cacheWarmingService.refreshRecommendationAsync(username);
 		return Map.of("success", "Đã xóa bình luận!");
 	}
 }

@@ -46,13 +46,13 @@ public class BookController {
     //xếp hạng sách
     @GetMapping("/rank")
     public ResponseEntity<?> bookRanking() {
-    	return ResponseEntity.ok().body(bookService.findTop15Books());
+    	return ResponseEntity.ok().body(bookService.findTop10Books());
     }
     
     //lay sach de xuat
     @GetMapping("/recommend")
     public ResponseEntity<?> getRecommendBooks(@RequestParam(defaultValue = "") String username) {
-    	return ResponseEntity.ok().body(bookService.getRecomendBooks(username));
+    	return ResponseEntity.ok().body(bookService.getRecommendBooks(username));
     }
 
 }

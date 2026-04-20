@@ -7,9 +7,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +29,8 @@ import bookonline.repository.CommentRepository;
 import bookonline.repository.FavoriteRepository;
 import bookonline.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +42,8 @@ public class BookService {
     @Autowired private FavoriteRepository favoriteRepository;
     @Autowired private BookEarningRepository bookEarningRepository;
     @Autowired private UserRepository userRepository;
-
+    @Autowired private RecommendationService recommendationService;
+    
     // 1. Lấy danh sách sách đang CHỜ DUYỆT (status = 0)
     public List<Book> getPendingBooks() {
         return bookRepository.findByStatus(0);
@@ -191,7 +196,7 @@ public class BookService {
     }
     
     //xếp hạng 10 quyển sách rating cao nhất
-    public List<BookRankResponse> findTop15Books() {
+    public List<BookRankResponse> findTop10Books() {
     	List<Book> listBooks = bookRepository.findTop10BooksSortedByRating();
     	
     	List<BookRankResponse> response = new ArrayList<>(); 
@@ -223,51 +228,60 @@ public class BookService {
     	return bookRepository.findByAuthorNameAndStatus(authorName, 1);
     }
     
- // đề xuất sách
-    public List<Book> getRecomendBooks(String username) {
-    	if(username == null || username.equals("")) {
-    		return bookRepository.findTop10BooksSortedByRating();
-    	}
-    	User user = userRepository.findByUsername(username);
-    	if(user == null) {
-    		return bookRepository.findTop10BooksSortedByRating();
-    	}
-    	
-    	String userId = user.getUserId();
-    	
-    	List<String> readDeeplyIds = bookRepository.findBookIdsReadDeeplyIn7Day(userId);
-    	List<String> readShallowlyIds = bookRepository.findBookIdsReadShallowlyIn7Day(userId);
-    	List<String> favIds = bookRepository.findBookIdsFavoritedIn7Day(userId);
-    	List<String> cmtIds = bookRepository.findBookIdsCommentedIn7Day(userId);
-    	
-    	//chua doc hay yeu thich binh luan sach nao thi tra ve top 10
-    	if(readDeeplyIds.isEmpty() && readShallowlyIds.isEmpty() && favIds.isEmpty() && cmtIds.isEmpty()) {
-    		return bookRepository.findTop10BooksSortedByRating();
-    	}
-    	
-    	Map<Integer, Integer> categoryScores = new HashMap<>();
-    	processScore(readDeeplyIds, 7, categoryScores); //doc sau dc 7d
-    	processScore(readShallowlyIds, 2, categoryScores); // doc luot 2d
-    	processScore(favIds, 10, categoryScores);//yeu thich 10d
-    	processScore(cmtIds, 7, categoryScores); // cmt 7d
-    	
-    	//lay top 3 the loai cao diem nhat
-    	List<Integer> topCategories = categoryScores.entrySet().stream()
-                .sorted(Map.Entry.<Integer, Integer>comparingByValue().reversed())
-                .map(Map.Entry::getKey)
-                .limit(3)
-                .toList();
-    	System.out.println(topCategories);
-    	return bookRepository.findRecommendBooks(userId, topCategories);
-    }
-   
-    //chấm điểm danh sách thể loại
-    private void processScore(List<String> bookIds, int score, Map<Integer, Integer> scores) {
-    	for(String bookId : bookIds) {
-    		List<Integer> categoryIds = bookRepository.findCategoryIdByBookId(bookId);
-    		for(int categoryId : categoryIds) {
-    			scores.put(categoryId, scores.getOrDefault(categoryId, 0) + score);
-    		}
-    	}
+    // đề xuất sách
+    @Cacheable(value = "userRecommendations", key = "#username", unless = "#result.size() == 0")
+    public List<Book> getRecommendBooks(String username) {
+        if (username == null || username.trim().isEmpty()) {
+            return bookRepository.findTop10BooksSortedByRating();
+        }
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            return bookRepository.findTop10BooksSortedByRating();
+        }
+        
+        String userId = user.getUserId();
+        
+        List<String> readDeeplyIds = bookRepository.findBookIdsReadDeeplyIn7Day(userId);
+        List<String> readShallowlyIds = bookRepository.findBookIdsReadShallowlyIn7Day(userId);
+        List<String> favIds = bookRepository.findBookIdsFavoritedIn7Day(userId);
+        List<String> cmtIds = bookRepository.findBookIdsCommentedIn7Day(userId);
+        
+        if (readDeeplyIds.isEmpty() && readShallowlyIds.isEmpty() && favIds.isEmpty() && cmtIds.isEmpty()) {
+            return bookRepository.findTop10BooksSortedByRating();
+        }
+        
+        List<Book> candidateBooks = bookRepository.findCandidateBooks(userId);
+        
+        if (candidateBooks.isEmpty()) {
+            return bookRepository.findTop10BooksSortedByRating();
+        }
+
+        // lấy thông tin sách
+        List<Book> favBooks = bookRepository.findAllById(favIds);
+        List<Book> deepReadBooks = bookRepository.findAllById(readDeeplyIds);
+        List<Book> shallowReadBooks = bookRepository.findAllById(readShallowlyIds);
+        List<Book> cmtBooks = bookRepository.findAllById(cmtIds);
+
+        // gọi GROQ AI (Reranking)
+        List<String> aiRecommendedIds = recommendationService.getAiRecommendedBookIds(
+                favBooks, deepReadBooks, shallowReadBooks, cmtBooks, candidateBooks
+        );
+
+        // xử lý kết quả tra về
+        if (aiRecommendedIds != null && !aiRecommendedIds.isEmpty()) {
+            // Lấy sách từ DB dựa trên list ID mà AI đã chốt
+            List<Book> finalBooks = bookRepository.findAllById(aiRecommendedIds);
+            
+            //lấy sách theo thứ tự trả về
+            return aiRecommendedIds.stream()
+                    .map(id -> finalBooks.stream()
+                               .filter(b -> b.getBookId().equals(id))
+                               .findFirst().orElse(null))
+                    .filter(Objects::nonNull)
+                    .toList();
+        }
+
+        System.out.println("⚠️ Groq AI không trả về kết quả, dùng fallback SQL.");
+        return candidateBooks.stream().limit(10).toList();
     }
 }

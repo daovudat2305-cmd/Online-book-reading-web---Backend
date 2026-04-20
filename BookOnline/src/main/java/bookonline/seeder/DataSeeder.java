@@ -37,7 +37,7 @@ public class DataSeeder implements CommandLineRunner{
 	}
 	
 	private void seedBooks() {
-		if(bookRepository.count() > 50) {
+		if(bookRepository.count() > 200) {
 			return;
 		}
 		// lấy admin làm tác giả
@@ -59,7 +59,7 @@ public class DataSeeder implements CommandLineRunner{
         Faker faker = new Faker();
         
         // tạo 100 cuốn sách
-        for (int i = 1; i <= 100; i++) {
+        for (int i = 1; i <= 200; i++) {
             String title = faker.book().title();
             String desc = faker.lorem().paragraph(4);
             String type = random.nextDouble() > 0.7 ? "VIP" : "FREE"; 
