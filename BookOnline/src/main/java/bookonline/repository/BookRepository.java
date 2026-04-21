@@ -94,6 +94,8 @@ public interface BookRepository extends JpaRepository<Book, String> {
             WHERE b.status = 1 
             AND b.bookId NOT IN (
                 SELECT bookId FROM reading_progress WHERE userId = :userId
+                ORDER BY lastTimeRead DESC
+ 				LIMIT 20
             )
             ORDER BY b.viewCount DESC
             LIMIT 30
@@ -107,6 +109,8 @@ public interface BookRepository extends JpaRepository<Book, String> {
  			WHERE userId = :userId
  			AND lastTimeRead > NOW() - INTERVAL 7 DAY
  			AND total_reading_time_seconds >= 60
+ 			ORDER BY lastTimeRead DESC
+ 			LIMIT 20
             """, nativeQuery = true)
     List<String> findBookIdsReadDeeplyIn7Day(@Param("userId") String userId);
    
@@ -116,6 +120,8 @@ public interface BookRepository extends JpaRepository<Book, String> {
  			WHERE userId = :userId
  			AND lastTimeRead > NOW() - INTERVAL 7 DAY
  			AND total_reading_time_seconds < 60
+ 			ORDER BY lastTimeRead DESC
+ 			LIMIT 20
             """, nativeQuery = true)
     List<String> findBookIdsReadShallowlyIn7Day(@Param("userId") String userId);
    
