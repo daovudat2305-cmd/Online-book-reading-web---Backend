@@ -38,6 +38,13 @@ public class ReadingProgressService {
 
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy cuốn sách này!"));
+        
+        int totalPages = (book.getTotalPages() != null && book.getTotalPages() > 0) ? book.getTotalPages() : 1;
+        
+        // Nếu số trang user gửi lên mà lớn hơn tổng số trang thực tế
+        if (currentPage != null && currentPage > totalPages) {
+            currentPage = totalPages; // Ép nó về trang tối đa (Ví dụ: nhập 1000 -> ép về 668)
+        }
 
         String realUserId = user.getUserId();
 
@@ -59,7 +66,7 @@ public class ReadingProgressService {
         }
     }
 
-    // 2. HÀM TĂNG LƯỢT ĐỌC RIÊNG BIỆT (Gọi sau khi user ở lại 10 giây)
+    // 2. HÀM TĂNG LƯỢT ĐỌC (Gọi sau khi user ở lại 10 giây)
     @Transactional
     public void incrementBookView(String bookId) {
         Book book = bookRepository.findById(bookId)

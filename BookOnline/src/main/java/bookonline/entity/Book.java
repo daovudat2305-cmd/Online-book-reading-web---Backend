@@ -25,7 +25,7 @@ public class Book {
     @Column(name = "authorId", length = 50)
     private String authorId;
     
-    private String type; // Chứa "FREE" hoặc "VIP"
+    private String type;
     
     @Column(name = "fileUrl")
     private String fileUrl;
@@ -58,7 +58,7 @@ public class Book {
     @Column(name = "authorName")
     private String authorName;
 
-    // KẾT NỐI VỚI BẢNG THỂ LOẠI (MANY TO MANY)
+    // KẾT NỐI VỚI BẢNG THỂ LOẠI
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "book_category", 
