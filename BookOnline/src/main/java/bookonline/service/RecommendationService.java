@@ -1,5 +1,10 @@
 package bookonline.service;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,19 +52,19 @@ public class RecommendationService {
         String candidatesList = buildCandidatesList(candidateBooks);
 
         //tạo prompt
-        String systemPrompt = "Bạn là một chuyên gia đề xuất sách. " +
-                "Nhiệm vụ của bạn là chọn ra CHÍNH XÁC 10 cuốn sách phù hợp nhất từ 'Danh sách ứng viên' dựa trên 'TOP 3 Thể loại yêu thích nhất của người dùng'." +
-                "Cách tính thể loại yêu thích nhất" +
-                "- Sách cực kỳ yêu thích: 10 điểm" +
-                "- Sách đã đọc kỹ: 7 điểm" +
-                "- Sách có xem qua nhưng bỏ dở: 2 điểm" +
-                "- Sách đã bình luận: 6 điểm" +
-                "QUAN TRỌNG: Chỉ trả về MỘT MẢNG JSON chứa bookId của 10 cuốn sách đó. KHÔNG giải thích, KHÔNG thêm bất kỳ văn bản nào khác. " +
+        String systemPrompt = "Bạn là một chuyên gia đề xuất sách. \n" +
+                "Nhiệm vụ của bạn là chọn ra CHÍNH XÁC 10 cuốn sách phù hợp nhất từ 'Danh sách ứng viên' dựa trên 'TOP 3 Thể loại yêu thích nhất của người dùng'.\n" +
+                "Cách tính thể loại yêu thích nhất:\n" +
+                "- Sách cực kỳ yêu thích: 10 điểm\n" +
+                "- Sách đã đọc kỹ: 7 điểm\n" +
+                "- Sách có xem qua nhưng bỏ dở: 2 điểm\n" +
+                "- Sách đã bình luận: 6 điểm\n" +
+                "QUAN TRỌNG: Chỉ trả về MỘT MẢNG JSON chứa bookId của 10 cuốn sách đó. KHÔNG giải thích, KHÔNG thêm bất kỳ văn bản nào khác. \n" +
                 "Ví dụ output: [\"id1\", \"id2\", \"id3\", ...]";
 
         String userPrompt = "--- SỞ THÍCH NGƯỜI DÙNG ---\n" + userContext +
                             "\n--- DANH SÁCH ỨNG VIÊN ---\n" + candidatesList;
-
+        
         //đóng gói và gọi
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -76,6 +81,8 @@ public class RecommendationService {
         try {
             ResponseEntity<GroqResponse> response = restTemplate.postForEntity(apiUrl, request, GroqResponse.class);
             String jsonResult = response.getBody().getChoices().get(0).getMessage().getContent();
+            
+            logRequest(systemPrompt, userContext, candidatesList, jsonResult);
             
             // lọc bỏ markdown block nếu Groq vô tình trả về ```json ... ```
             jsonResult = jsonResult.replace("```json", "").replace("```", "").trim();
@@ -94,10 +101,10 @@ public class RecommendationService {
     private String buildUserContext(List<Book> liked, List<Book> deep, List<Book> shallow, List<Book> cmt) {
         StringBuilder sb = new StringBuilder();
         
-        sb.append("- Sách cực kỳ yêu thích: ").append(extractBookInfo(liked)).append("\n");
-        sb.append("- Sách đã đọc kỹ: ").append(extractBookInfo(deep)).append("\n");
-        sb.append("- Sách có xem qua nhưng bỏ dở: ").append(extractBookInfo(shallow)).append("\n");
-        sb.append("- Sách đã bình luận: ").append(extractBookInfo(cmt)).append("\n");
+        sb.append("- Sách cực kỳ yêu thích: \n").append(extractBookInfo(liked)).append("\n");
+        sb.append("- Sách đã đọc kỹ: \n").append(extractBookInfo(deep)).append("\n");
+        sb.append("- Sách có xem qua nhưng bỏ dở: \n").append(extractBookInfo(shallow)).append("\n");
+        sb.append("- Sách đã bình luận: \n").append(extractBookInfo(cmt)).append("\n");
         return sb.toString();
     }
 
@@ -105,7 +112,7 @@ public class RecommendationService {
         StringBuilder sb = new StringBuilder();
         for (Book b : candidates) {
             String categoryNames = getCategoryNamesAsString(b);
-            sb.append(String.format("ID: %s | Tên: %s | Thể loại: %s | Mô tả: %s\n", 
+            sb.append(String.format("- ID: %s | Tên: %s | Thể loại: %s | Mô tả: %s\n", 
                     b.getBookId(), 
                     b.getTitle(), 
                     categoryNames, 
@@ -116,8 +123,8 @@ public class RecommendationService {
 
     private String extractBookInfo(List<Book> books) {
         return books.stream()
-                .map(b -> String.format("'%s' (Thể loại: %s)", b.getTitle(), getCategoryNamesAsString(b)))
-                .collect(Collectors.joining(", "));
+                .map(b -> String.format("+ '%s' (Thể loại: %s)", b.getTitle(), getCategoryNamesAsString(b)))
+                .collect(Collectors.joining("\n"));
     }
     
     //lấy ds thể loại
@@ -128,5 +135,31 @@ public class RecommendationService {
         }
         return "Chưa rõ";
         
+    }
+    
+    private void logRequest(String systemPrompt, String userContext, String candidatesList, String groqResponse) {
+    	String csvFilePath = "groq_api_log.csv";
+    	boolean isNewFile = !new File(csvFilePath).exists();
+    	
+    	try (FileWriter fw = new FileWriter(csvFilePath, true);
+    		PrintWriter pw = new PrintWriter(fw)) {
+			
+    		if(isNewFile) {
+    			pw.write('\ufeff');
+    			pw.println("Thời gian,SystemPrompt,Thông tin User(Context),Danh sách ứng viên(Candidates), Groq Response");
+    		}
+    		
+    		String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    		
+    		String cleanSys = systemPrompt.replace("\"", "\"\"");
+            String cleanUser = userContext.replace("\"", "\"\"");
+            String cleanCand = candidatesList.replace("\"", "\"\"");
+            String cleanRes = (groqResponse != null) ? groqResponse.replace("\"", "\"\"") : "N/A";
+
+            pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", currentTime, cleanSys, cleanUser, cleanCand, cleanRes);
+    		
+		} catch (Exception e) {
+			System.err.println("Lỗi khi in log" + e.getMessage());
+		}
     }
 }
