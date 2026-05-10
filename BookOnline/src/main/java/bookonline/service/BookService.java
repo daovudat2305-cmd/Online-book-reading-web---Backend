@@ -246,10 +246,10 @@ public class BookService {
         
         String userId = user.getUserId();
         
-        List<String> readDeeplyIds = bookRepository.findBookIdsReadDeeplyIn7Day(userId);
-        List<String> readShallowlyIds = bookRepository.findBookIdsReadShallowlyIn7Day(userId);
-        List<String> favIds = bookRepository.findBookIdsFavoritedIn7Day(userId);
-        List<String> cmtIds = bookRepository.findBookIdsCommentedIn7Day(userId);
+        List<String> readDeeplyIds = bookRepository.findBookIdsReadDeeplyIn30Days(userId);
+        List<String> readShallowlyIds = bookRepository.findBookIdsReadShallowlyIn30Days(userId);
+        List<String> favIds = bookRepository.findBookIdsFavoritedIn30Days(userId);
+        List<String> cmtIds = bookRepository.findBookIdsCommentedIn30Days(userId);
         
         if (readDeeplyIds.isEmpty() && readShallowlyIds.isEmpty() && favIds.isEmpty() && cmtIds.isEmpty()) {
             return bookRepository.findTop10BooksSortedByRating();

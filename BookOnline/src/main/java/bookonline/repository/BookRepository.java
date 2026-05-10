@@ -107,38 +107,38 @@ public interface BookRepository extends JpaRepository<Book, String> {
     @Query(value = """
             SELECT bookId FROM reading_progress
  			WHERE userId = :userId
- 			AND lastTimeRead > NOW() - INTERVAL 7 DAY
+ 			AND lastTimeRead > NOW() - INTERVAL 30 DAY
  			AND total_reading_time_seconds >= 60
  			ORDER BY lastTimeRead DESC
  			LIMIT 20
             """, nativeQuery = true)
-    List<String> findBookIdsReadDeeplyIn7Day(@Param("userId") String userId);
+    List<String> findBookIdsReadDeeplyIn30Days(@Param("userId") String userId);
    
     //sách đọc < 1p
     @Query(value = """
             SELECT bookId FROM reading_progress
  			WHERE userId = :userId
- 			AND lastTimeRead > NOW() - INTERVAL 7 DAY
+ 			AND lastTimeRead > NOW() - INTERVAL 30 DAY
  			AND total_reading_time_seconds < 60
  			ORDER BY lastTimeRead DESC
  			LIMIT 20
             """, nativeQuery = true)
-    List<String> findBookIdsReadShallowlyIn7Day(@Param("userId") String userId);
+    List<String> findBookIdsReadShallowlyIn30Days(@Param("userId") String userId);
    
     //sách yêu thích trong 7 ngày
     @Query(value = """
             SELECT bookId FROM favorite
  			WHERE userId = :userId
- 			AND createdTime > NOW() - INTERVAL 7 DAY
+ 			AND createdTime > NOW() - INTERVAL 30 DAY
             """, nativeQuery = true)
-    List<String> findBookIdsFavoritedIn7Day(@Param("userId") String userId);
+    List<String> findBookIdsFavoritedIn30Days(@Param("userId") String userId);
    
     //sách bình luận trong 7 ngày
     @Query(value = """
             SELECT bookId
  			FROM comment
  			WHERE userId = :userId
- 			AND createdAt > NOW() - INTERVAL 7 DAY
+ 			AND createdAt > NOW() - INTERVAL 30 DAY
             """, nativeQuery = true)
-    List<String> findBookIdsCommentedIn7Day(@Param("userId") String userId);
+    List<String> findBookIdsCommentedIn30Days(@Param("userId") String userId);
 }
