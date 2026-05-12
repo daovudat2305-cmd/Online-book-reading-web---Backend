@@ -2,6 +2,7 @@ package bookonline.repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.EntityGraph; // <-- Tôi thêm import này để fix lỗi N+1
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,12 +16,16 @@ import bookonline.entity.Book;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, String> {
+	
+	@EntityGraph(attributePaths = {"categories"}) // <-- Fix N+1 khi load trang chi tiết sách
     Book findByBookId(String bookId);
 
     // 1. Tìm tất cả sách theo trạng thái (0: Chờ duyệt, 1: Đã duyệt, 2: Từ chối, 3: Đã xóa)
+	@EntityGraph(attributePaths = {"categories"}) // <-- Fix N+1 khi Admin load danh sách chờ duyệt
     List<Book> findByStatus(Integer status);
 
     // 2. Tìm danh sách sách của một tác giả cụ thể (phục vụ phần Lịch sử đăng sách)
+	@EntityGraph(attributePaths = {"categories"}) // <-- Fix N+1 khi Tác giả xem lịch sử đăng
     List<Book> findByAuthorId(String authorId);
 
     // 3. Lưu nhiều thể loại cho 1 cuốn sách (Native Query để chèn vào bảng trung gian)
@@ -31,6 +36,7 @@ public interface BookRepository extends JpaRepository<Book, String> {
 
 
     // Lọc sách kết hợp phân trang cho trang chủ / trang thể loại
+    @EntityGraph(attributePaths = {"categories"}) // <-- Fix N+1 khi gọi API /filter tìm kiếm
     @Query("SELECT DISTINCT b FROM Book b " +
             "LEFT JOIN b.categories c " +
             "WHERE (:keyword IS NULL OR LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
@@ -95,7 +101,7 @@ public interface BookRepository extends JpaRepository<Book, String> {
             AND b.bookId NOT IN (
                 SELECT bookId FROM reading_progress WHERE userId = :userId
                 ORDER BY lastTimeRead DESC
- 				LIMIT 20
+				LIMIT 20
             )
             ORDER BY b.viewCount DESC
             LIMIT 30
@@ -106,39 +112,39 @@ public interface BookRepository extends JpaRepository<Book, String> {
     //sách đọc hơn 1p trong 7 ngày gần đây
     @Query(value = """
             SELECT bookId FROM reading_progress
- 			WHERE userId = :userId
- 			AND lastTimeRead > NOW() - INTERVAL 30 DAY
- 			AND total_reading_time_seconds >= 60
- 			ORDER BY lastTimeRead DESC
- 			LIMIT 20
+			WHERE userId = :userId
+			AND lastTimeRead > NOW() - INTERVAL 30 DAY
+			AND total_reading_time_seconds >= 60
+			ORDER BY lastTimeRead DESC
+			LIMIT 20
             """, nativeQuery = true)
     List<String> findBookIdsReadDeeplyIn30Days(@Param("userId") String userId);
    
     //sách đọc < 1p
     @Query(value = """
             SELECT bookId FROM reading_progress
- 			WHERE userId = :userId
- 			AND lastTimeRead > NOW() - INTERVAL 30 DAY
- 			AND total_reading_time_seconds < 60
- 			ORDER BY lastTimeRead DESC
- 			LIMIT 20
+			WHERE userId = :userId
+			AND lastTimeRead > NOW() - INTERVAL 30 DAY
+			AND total_reading_time_seconds < 60
+			ORDER BY lastTimeRead DESC
+			LIMIT 20
             """, nativeQuery = true)
     List<String> findBookIdsReadShallowlyIn30Days(@Param("userId") String userId);
    
     //sách yêu thích trong 7 ngày
     @Query(value = """
             SELECT bookId FROM favorite
- 			WHERE userId = :userId
- 			AND createdTime > NOW() - INTERVAL 30 DAY
+			WHERE userId = :userId
+			AND createdTime > NOW() - INTERVAL 30 DAY
             """, nativeQuery = true)
     List<String> findBookIdsFavoritedIn30Days(@Param("userId") String userId);
    
     //sách bình luận trong 7 ngày
     @Query(value = """
             SELECT bookId
- 			FROM comment
- 			WHERE userId = :userId
- 			AND createdAt > NOW() - INTERVAL 30 DAY
+			FROM comment
+			WHERE userId = :userId
+			AND createdAt > NOW() - INTERVAL 30 DAY
             """, nativeQuery = true)
     List<String> findBookIdsCommentedIn30Days(@Param("userId") String userId);
 }
