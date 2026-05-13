@@ -44,19 +44,19 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // 1. Cho phép Frontend ở cổng 5500 gọi sang (Thêm cả localhost và 127.0.0.1)
+        // cho phép Frontend ở cổng 5500 gọi sang (Thêm cả localhost và 127.0.0.1)
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:5500", 
             "http://127.0.0.1:5500"
         ));
         
-        // 2. Cho phép các phương thức (GET, POST,...)
+        // cho phép các phương thức (GET, POST,...)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         
-        // 3. Cho phép tất cả các Header (quan trọng để Frontend gửi được header Authorization chứa Token)
+        // cho phép tất cả các Header (quan trọng để Frontend gửi được header Authorization chứa Token)
         configuration.setAllowedHeaders(List.of("*"));
         
-        // 4. (Tùy chọn) Cho phép gửi thông tin xác thực như Cookie (nếu cần)
+        // (Tùy chọn) Cho phép gửi thông tin xác thực như Cookie (nếu cần)
         configuration.setAllowCredentials(true);
 
         // Áp dụng cấu hình này cho TẤT CẢ CÁC ĐƯỜNG DẪN ("/**")
@@ -87,7 +87,7 @@ public class SecurityConfig {
 				.anyRequest().authenticated()
 		);
 		
-		//chèn bộ lọc JWT của chúng ta vào chuỗi bảo mật
+		//chèn bộ lọc JWT 
         httpSecurity.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 		
 		return httpSecurity.build();

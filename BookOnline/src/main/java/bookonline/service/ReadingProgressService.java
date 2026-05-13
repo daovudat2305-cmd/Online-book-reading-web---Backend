@@ -43,7 +43,7 @@ public class ReadingProgressService {
         
         // Nếu số trang user gửi lên mà lớn hơn tổng số trang thực tế
         if (currentPage != null && currentPage > totalPages) {
-            currentPage = totalPages; // Ép nó về trang tối đa (Ví dụ: nhập 1000 -> ép về 668)
+            currentPage = totalPages;
         }
 
         String realUserId = user.getUserId();
@@ -96,12 +96,10 @@ public class ReadingProgressService {
     public void addReadingTime(String username, String bookId, Long secondsToAdd) {
         User user = userRepository.findByUsername(username);
         
-        // Nếu không có user hoặc số giây gửi lên bị lỗi thì bỏ qua
         if (user == null || secondsToAdd == null || secondsToAdd <= 0) {
             return; 
         }
 
-        //  Gọi thẳng xuống Repository để Database tự thực hiện phép cộng
         progressRepository.incrementReadingTime(user.getUserId(), bookId, secondsToAdd);
     }
 }

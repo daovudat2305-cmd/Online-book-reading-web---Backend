@@ -92,20 +92,17 @@ public class BookService {
     }
 
     // 5.ĐĂNG SÁCH MỚI
-    @Transactional // MỚI THÊM: Bọc giao dịch để đảm bảo lưu sách và thể loại không bị lỗi giữa chừng
+    @Transactional 
     public Book createBook(String title, String description, String authorId, String authorName, 
                            String type, Integer totalPages, 
                            MultipartFile coverFile, MultipartFile pdfFile,
-                           List<Integer> categoryIds) throws IOException { // MỚI THÊM: Hứng danh sách thể loại
+                           List<Integer> categoryIds) throws IOException { 
         
-        // Bước 1: Mang file đi up lên Cloudinary và lấy 2 cái link URL về
         String coverUrl = cloudinaryService.uploadImage(coverFile);
         String pdfUrl = cloudinaryService.uploadPdf(pdfFile);
         
-        // Bước 2: Tạo một cái ID ngẫu nhiên bằng chữ (chuẩn UUID) cho sách
         String newBookId = UUID.randomUUID().toString();
         
-        // Bước 3: Đóng gói toàn bộ nguyên liệu thành 1 cuốn sách
         Book newBook = Book.builder()
                 .bookId(newBookId)
                 .title(title)
@@ -121,10 +118,8 @@ public class BookService {
                 .createdAt(LocalDate.now()) 
                 .build();
                 
-        // Bước 4: Đưa cho thủ kho cất xuống Database bảng Book
         Book savedBook = bookRepository.save(newBook);
 
-        // Bước 5 (MỚI THÊM): Lặp qua từng ID thể loại và cất vào bảng book_category
         if (categoryIds != null && !categoryIds.isEmpty()) {
             for (Integer catId : categoryIds) {
                 bookRepository.insertBookCategory(newBookId, catId);
@@ -140,13 +135,11 @@ public class BookService {
             Book book = bookRepository.findById(bookId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sách có ID: " + bookId));
             
-            // Thay vì xóa hẳn, ta đổi trạng thái thành 3 và lưu lý do
             book.setStatus(3);
             book.setMessage(reason);
             bookRepository.save(book);
             
         } catch (Exception e) {
-            // In toàn bộ lỗi đỏ rực ra màn hình Console của Java
             System.err.println("========== LỖI KHI XÓA SÁCH ==========");
             e.printStackTrace(); 
             throw new RuntimeException("Lỗi khi xóa: " + e.getMessage());
@@ -163,8 +156,7 @@ public class BookService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy cuốn sách có ID: " + bookId));
     }
 
-    // 9. TÍNH NĂNG MỚI: Lọc sách theo nhiều điều kiện kết hợp phân trang
-
+    // 9. Lọc sách theo nhiều điều kiện kết hợp phân trang
     public Page<Book> filterBooks(String keyword, String categories, String type, Integer status, int page, int size, String sort) {
         // 1. Xử lý sắp xếp (JS gửi lên 'newest' hoặc 'oldest')
     	org.springframework.data.domain.Sort sortOrder = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")

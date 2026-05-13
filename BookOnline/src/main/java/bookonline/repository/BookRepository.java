@@ -2,7 +2,7 @@ package bookonline.repository;
 
 import java.util.List;
 
-import org.springframework.data.jpa.repository.EntityGraph; // <-- Tôi thêm import này để fix lỗi N+1
+import org.springframework.data.jpa.repository.EntityGraph; 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,15 +17,15 @@ import bookonline.entity.Book;
 @Repository
 public interface BookRepository extends JpaRepository<Book, String> {
 	
-	@EntityGraph(attributePaths = {"categories"}) // <-- Fix N+1 khi load trang chi tiết sách
+	@EntityGraph(attributePaths = {"categories"})
     Book findByBookId(String bookId);
 
     // 1. Tìm tất cả sách theo trạng thái (0: Chờ duyệt, 1: Đã duyệt, 2: Từ chối, 3: Đã xóa)
-	@EntityGraph(attributePaths = {"categories"}) // <-- Fix N+1 khi Admin load danh sách chờ duyệt
+	@EntityGraph(attributePaths = {"categories"})
     List<Book> findByStatus(Integer status);
 
     // 2. Tìm danh sách sách của một tác giả cụ thể (phục vụ phần Lịch sử đăng sách)
-	@EntityGraph(attributePaths = {"categories"}) // <-- Fix N+1 khi Tác giả xem lịch sử đăng
+	@EntityGraph(attributePaths = {"categories"})
     List<Book> findByAuthorId(String authorId);
 
     // 3. Lưu nhiều thể loại cho 1 cuốn sách (Native Query để chèn vào bảng trung gian)
@@ -36,7 +36,7 @@ public interface BookRepository extends JpaRepository<Book, String> {
 
 
     // Lọc sách kết hợp phân trang cho trang chủ / trang thể loại
-    @EntityGraph(attributePaths = {"categories"}) // <-- Fix N+1 khi gọi API /filter tìm kiếm
+    @EntityGraph(attributePaths = {"categories"})
     @Query("SELECT DISTINCT b FROM Book b " +
             "LEFT JOIN b.categories c " +
             "WHERE (:keyword IS NULL OR LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
