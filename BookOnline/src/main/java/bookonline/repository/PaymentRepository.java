@@ -16,6 +16,7 @@ import java.util.List;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, String> {
 	List<Payment> findByStatus(String status);
+	List<Payment> findByContent(String content);
 	Payment findByPaymentId(String paymentId);
 	
 	List<Payment> findByStatusAndCreatedTimeBefore(String status, LocalDateTime dateTime);

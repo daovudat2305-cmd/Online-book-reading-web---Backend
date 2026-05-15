@@ -29,7 +29,7 @@ import bookonline.repository.UserVipRepository;
 @Service
 public class UserService {
 	
-	private final PasswordEncoder passwordEncoder;
+	@Autowired private PasswordEncoder passwordEncoder;
 	
 	@Autowired private UserRepository userRepository;
 	

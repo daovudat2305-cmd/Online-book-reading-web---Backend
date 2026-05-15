@@ -17,6 +17,7 @@ import bookonline.util.JwtUtil;
 public class AuthService {
 	
 	@Autowired private JwtUtil jwtUtil;
+	@Autowired private PasswordEncoder passwordEncoder;
 	
 	@Autowired
 	private UserRepository userRepository;

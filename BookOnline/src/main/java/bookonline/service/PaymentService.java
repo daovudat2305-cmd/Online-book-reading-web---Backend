@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,10 @@ public class PaymentService {
 		User user = userRepository.findByUsername(username);
 		
 		Vip vip = vipRepository.findByVipId(vipId);
+		
+		if(vip == null) {
+			throw new RuntimeException("Gói VIP không tồn tại!");
+		}
 		
 		String paymentId = UUID.randomUUID().toString();
 		Payment newPayment = Payment.builder()
@@ -103,7 +108,11 @@ public class PaymentService {
 								.build();
 					}
 					else {//gia hạn vip (đã có vip)
-						userVip.setEndDate(userVip.getEndDate().plusDays(vip.getDurationTime()));
+						if(userVip.getEndDate().isBefore(LocalDateTime.now())) {
+						    userVip.setEndDate(LocalDateTime.now().plusDays(vip.getDurationTime()));
+						} else {
+						    userVip.setEndDate(userVip.getEndDate().plusDays(vip.getDurationTime()));
+						}
 						userVip.setVipId(payment.getVipId());
 						userVip.setVip(vip);
 					}
@@ -128,7 +137,15 @@ public class PaymentService {
 		return Map.of("status", payment.getStatus());
 	}
 	
+	
 	public Page<PaymentResponse> getPaymentsByUsername(int page, int size, String username) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		String username1 = authentication.getName();
+		
+		if(!username.equals(username1)) {
+			throw new RuntimeException("Không thể xem lịch sử thanh toán của người khác");
+		}
+		
 		User user = userRepository.findByUsername(username);
 		if(user==null) {
 			throw new RuntimeException("Không tìm thấy người dùng");
