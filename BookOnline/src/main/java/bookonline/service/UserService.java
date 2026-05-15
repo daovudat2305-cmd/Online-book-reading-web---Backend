@@ -130,7 +130,7 @@ public class UserService {
 		}
 		
 		UserInfo userInfo = userInfoRepository.findByUserId(user.getUserId());
-		// 3. Cập nhật thông tin (Vì là PATCH nên ta chỉ cập nhật những trường có dữ liệu gửi lên)
+		// Cập nhật thông tin
 		if(request.getBankAccount() != null && !request.getBankAccount().trim().isEmpty()) {
 			userInfo.setBankAccount(request.getBankAccount());
 		}

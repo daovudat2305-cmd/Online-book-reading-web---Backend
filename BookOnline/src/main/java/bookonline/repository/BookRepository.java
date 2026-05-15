@@ -104,7 +104,7 @@ public interface BookRepository extends JpaRepository<Book, String> {
 				LIMIT 20
             )
             ORDER BY b.viewCount DESC
-            LIMIT 30
+            LIMIT 50
             """, nativeQuery = true)
     List<Book> findCandidateBooks(@Param("userId") String userId);
    
