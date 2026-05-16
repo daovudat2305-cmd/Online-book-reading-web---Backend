@@ -228,6 +228,10 @@ public class BookService {
     // đề xuất sách
     @Cacheable(value = "userRecommendations", key = "#username", unless = "#result.size() == 0")
     public List<Book> getRecommendBooks(String username) {
+        return generateRecommendationsBypassCache(username);
+    }
+    
+    public List<Book> generateRecommendationsBypassCache(String username) {
         if (username == null || username.trim().isEmpty()) {
             return bookRepository.findTop10BooksSortedByRating();
         }
