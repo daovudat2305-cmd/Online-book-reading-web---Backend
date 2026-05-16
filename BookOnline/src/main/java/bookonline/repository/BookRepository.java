@@ -109,7 +109,7 @@ public interface BookRepository extends JpaRepository<Book, String> {
     List<Book> findCandidateBooks(@Param("userId") String userId);
    
    
-    //sách đọc hơn 1p trong 7 ngày gần đây
+    //sách đọc hơn 1p trong 30 ngày gần đây
     @Query(value = """
             SELECT bookId FROM reading_progress
 			WHERE userId = :userId
@@ -131,7 +131,7 @@ public interface BookRepository extends JpaRepository<Book, String> {
             """, nativeQuery = true)
     List<String> findBookIdsReadShallowlyIn30Days(@Param("userId") String userId);
    
-    //sách yêu thích trong 7 ngày
+    //sách yêu thích trong 30 ngày
     @Query(value = """
             SELECT bookId FROM favorite
 			WHERE userId = :userId
@@ -139,9 +139,9 @@ public interface BookRepository extends JpaRepository<Book, String> {
             """, nativeQuery = true)
     List<String> findBookIdsFavoritedIn30Days(@Param("userId") String userId);
    
-    //sách bình luận trong 7 ngày
+    //sách bình luận trong 30 ngày
     @Query(value = """
-            SELECT bookId
+            SELECT DISTINCT bookId
 			FROM comment
 			WHERE userId = :userId
 			AND createdAt > NOW() - INTERVAL 30 DAY
